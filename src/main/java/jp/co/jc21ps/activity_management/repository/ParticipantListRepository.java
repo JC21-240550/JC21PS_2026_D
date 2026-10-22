@@ -18,10 +18,26 @@ public class ParticipantListRepository {
     // 初期画面表示
     public List<ParticipantListEntity> getParticipantListData(ParticipantListEntity paramEntity) {
         /*
-         * TODO ➊ 初期表示情報を取得するSQLを完成させる。
+         * ➊ 初期表示情報を取得するSQL
          */
         String sql = """
-
+                SELECT
+                    trn_participant.activity_id,
+                    mst_user.user_id,
+                    trn_activity.activity_name,
+                    mst_user.user_name
+                FROM
+                    trn_participant
+                JOIN
+                    mst_user
+                ON
+                    trn_participant.user_id = mst_user.user_id
+                JOIN
+                    trn_activity
+                ON
+                    trn_participant.activity_id = trn_activity.activity_id
+                WHERE
+                    trn_activity.activity_id = ?
                 """;
 
         List<Map<String, Object>> participantList = jdbcTemplate.queryForList(sql,
@@ -38,7 +54,8 @@ public class ParticipantListRepository {
 
             // responseEntityに値をセットする
             ParticipantListEntity responseEntity = new ParticipantListEntity();
-            responseEntity.setActivityId((String) participant.get("activity_id"));
+            // activity_idがINT型でもVARCHAR型でも動くようにString.valueOfで変換
+            responseEntity.setActivityId(String.valueOf(participant.get("activity_id")));
             responseEntity.setUserId((String) participant.get("user_id"));
             responseEntity.setActivityName((String) participant.get("activity_name"));
             responseEntity.setUserName((String) participant.get("user_name"));
@@ -53,10 +70,15 @@ public class ParticipantListRepository {
     // 活動名を表示
     public String getActivityName(ParticipantListEntity paramEntity) {
         /*
-         * TODO ➋ 活動名を取得するSQLを完成させる。
+         * ➋ 活動名を取得するSQL
          */
         String sql = """
-
+                SELECT
+                    activity_name
+                FROM
+                    trn_activity
+                WHERE
+                    activity_id = ?
                 """;
 
         List<Map<String, Object>> actNameList = jdbcTemplate.queryForList(sql, paramEntity.getActivityId());

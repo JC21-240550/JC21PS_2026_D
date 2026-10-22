@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -80,8 +81,27 @@ public class JoinRequestController {
         paramForm.setMessage(joinOkMessage);
 
         /*
-         * TODO ➊ 初期表示情報取得結果に応じて、以下の条件文を完成させる。
+         * ➊ 初期表示情報取得結果に応じて、以下の条件文を完成させる。
          */
+        if (responseForm.isEmpty()) {
+            // messages.propertiesからメッセージを取得
+            String notRequestClubMessage = messageSource.getMessage("notRequestClubMessage", null,
+                    Locale.getDefault());
+
+            // 申請する部署がない場合のメッセージ
+            mav.addObject("notRequestClubMessage", notRequestClubMessage);
+
+            // 部員登録成功メッセージ
+            if (!ObjectUtils.isEmpty(paramForm)) {
+                mav.addObject("joinRequestCompleteMessage", paramForm.getMessage());
+            }
+        } else {
+            // 部員登録成功メッセージ
+            if (!ObjectUtils.isEmpty(paramForm)) {
+                mav.addObject("joinRequestCompleteMessage", paramForm.getMessage());
+            }
+            mav.addObject("joinRequestSaveForm", responseForm);
+        }
 
         mav.addObject("leaderClubId", leaderClubId);
 
@@ -116,8 +136,22 @@ public class JoinRequestController {
         try {
             boolean result = joinRequestService.insertJoinRequest(joinRequestSaveDto);
             /*
-             * TODO ➋ インサートの成功、失敗に応じて、処理を変更する。
+             * ➋ インサートの成功、失敗に応じて、処理を変更する。
              */
+            if (result) {
+                // messages.propertiesからメッセージを取得
+                String joinRequestCompleteMessage = messageSource
+                        .getMessage("joinRequestCompleteMessage", null, Locale.getDefault());
+                paramForm.setMessage(joinRequestCompleteMessage);
+
+                // リダイレクト先に登録申請成功メッセージを渡す
+                redirectAttributes.addFlashAttribute("joinOkMessage", paramForm.getMessage());
+                mav.setViewName("redirect:/joinRequest");
+
+            } else {
+                // 登録失敗した場合、エラー画面に遷移
+                mav.setViewName("error");
+            }
 
         } catch (Exception e) {
             mav.setViewName("error");
